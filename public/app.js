@@ -10,8 +10,14 @@ async function cargarHistorial() {
 
 async function poll() {
   try {
-    const res  = await fetch('/api/alertas?since=' + ultimoId + '&_=' + Date.now());
+    const url  = '/api/alertas?since=' + ultimoId + '&_=' + Date.now();
+    const res  = await fetch(url);
     const data = await res.json();
+
+    document.getElementById('debug').textContent =
+      'Ultimo poll: ' + new Date().toLocaleTimeString() +
+      ' | ultimoId: ' + ultimoId +
+      ' | nuevas: ' + data.length;
 
     if (data.length > 0) {
       data.slice().reverse().forEach(a => mostrarAlerta(a, true));
@@ -21,8 +27,8 @@ async function poll() {
     }
 
     document.getElementById('estado').textContent = 'Conectado';
-  } catch (_) {
-    document.getElementById('estado').textContent = 'Sin conexion';
+  } catch (e) {
+    document.getElementById('estado').textContent = 'Error: ' + e.message;
   }
 }
 

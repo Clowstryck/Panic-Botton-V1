@@ -18,7 +18,60 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+
+// ─── Dashboard ────────────────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(`<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>Panic Button</title></head>
+<body>
+<h1>Panic Button Monitor</h1>
+<p>Estado: <strong id="e">Conectando...</strong></p>
+<p>Alertas: <strong id="t">0</strong></p>
+<button onclick="prueba()">Enviar prueba</button>
+<button onclick="limpiar()">Limpiar</button>
+<hr><div id="lista"></div>
+<script>
+var u=0,tot=0;
+function cargar(){
+  fetch('/api/alertas').then(function(r){return r.json();}).then(function(d){
+    for(var i=d.length-1;i>=0;i--)ag(d[i],false);
+    if(d.length>0)u=d[0].id;
+    tot=d.length;
+    document.getElementById('t').textContent=tot;
+    document.getElementById('e').textContent='Conectado';
+  }).catch(function(e){document.getElementById('e').textContent='Error:'+e.message;});
+}
+function poll(){
+  fetch('/api/alertas?since='+u+'&_='+Date.now()).then(function(r){return r.json();}).then(function(d){
+    if(d.length>0){
+      for(var i=d.length-1;i>=0;i--)ag(d[i],true);
+      u=d[0].id; tot+=d.length;
+      document.getElementById('t').textContent=tot;
+    }
+    document.getElementById('e').textContent='Conectado - '+new Date().toLocaleTimeString();
+  }).catch(function(e){document.getElementById('e').textContent='Error:'+e.message;});
+}
+function ag(a,nueva){
+  var div=document.createElement('div');
+  div.innerHTML='<hr><p><b>'+a.message+'</b></p><p>Dispositivo: '+a.device_id+'</p><p>Hora: '+a.timestamp+'</p>'+(a.lat?'<p>GPS: <a href="https://maps.google.com/?q='+a.lat+','+a.lng+'" target="_blank">'+a.lat+', '+a.lng+'</a></p>':'');
+  var l=document.getElementById('lista');
+  if(nueva)l.insertBefore(div,l.firstChild);else l.appendChild(div);
+}
+function prueba(){fetch('/api/test',{method:'POST'});}
+function limpiar(){
+  fetch('/api/alertas',{method:'DELETE'}).then(function(){
+    document.getElementById('lista').innerHTML='';
+    document.getElementById('t').textContent='0';
+    tot=0;u=0;
+  });
+}
+cargar();
+setInterval(poll,2000);
+</script>
+</body></html>`);
+});
 
 // ─── API REST ─────────────────────────────────────────────────────
 

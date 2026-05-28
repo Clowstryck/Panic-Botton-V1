@@ -14,26 +14,23 @@ const btnClear     = document.getElementById('btnClear');
 
 let total = 0;
 
-/* ─── WebSocket ────────────────────────────────────────── */
-function conectarWS() {
-  const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const ws = new WebSocket(`${protocol}//${location.host}`);
+/* ─── Server-Sent Events ───────────────────────────────── */
+function conectarSSE() {
+  const es = new EventSource('/api/events');
 
-  ws.onopen = () => {
-    wsDot.className  = 'dot connected';
+  es.onopen = () => {
+    wsDot.className     = 'dot connected';
     wsLabel.textContent = 'Conectado';
   };
 
-  ws.onclose = () => {
-    wsDot.className  = 'dot disconnected';
-    wsLabel.textContent = 'Desconectado';
-    // Reintentar conexión en 3 segundos
-    setTimeout(conectarWS, 3000);
+  es.onerror = () => {
+    wsDot.className     = 'dot disconnected';
+    wsLabel.textContent = 'Reconectando...';
+    // EventSource reconecta automáticamente
   };
 
-  ws.onerror = () => ws.close();
-
-  ws.onmessage = (e) => {
+  es.onmessage = (e) => {
+    if (!e.data) return;
     const msg = JSON.parse(e.data);
 
     if (msg.type === 'historial') {
@@ -168,4 +165,4 @@ function escHtml(str) {
 }
 
 /* ─── Iniciar ──────────────────────────────────────────── */
-conectarWS();
+conectarSSE();

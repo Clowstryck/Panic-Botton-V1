@@ -31,6 +31,8 @@ function conectarSSE() {
 
   es.onmessage = (e) => {
     if (!e.data) return;
+    wsDot.className     = 'dot connected';
+    wsLabel.textContent = 'Conectado';
     const msg = JSON.parse(e.data);
 
     if (msg.type === 'historial') {

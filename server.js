@@ -67,7 +67,7 @@ function limpiar(){
   });
 }
 cargar();
-setInterval(poll,2000);
+setInterval(poll,1000);
 </script>
 </body></html>`);
 });

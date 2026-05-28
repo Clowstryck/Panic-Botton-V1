@@ -14,39 +14,54 @@ const btnClear     = document.getElementById('btnClear');
 
 let total = 0;
 
-/* ─── Server-Sent Events ───────────────────────────────── */
-function conectarSSE() {
-  const es = new EventSource('/api/events');
+/* ─── Polling ──────────────────────────────────────────── */
+let ultimoId = 0;
+let erroresConsecutivos = 0;
 
-  es.onopen = () => {
-    wsDot.className     = 'dot connected';
-    wsLabel.textContent = 'Conectado';
-  };
+async function cargarHistorial() {
+  try {
+    const res  = await fetch('/api/alertas');
+    const data = await res.json();
+    data.slice().reverse().forEach(a => agregarTarjeta(a, false));
+    if (data.length > 0) ultimoId = data[0].id;
+    actualizarContador();
+    setConectado(true);
+  } catch (_) {
+    setConectado(false);
+  }
+}
 
-  es.onerror = () => {
-    wsDot.className     = 'dot disconnected';
-    wsLabel.textContent = 'Reconectando...';
-    // EventSource reconecta automáticamente
-  };
+async function pollNuevasAlertas() {
+  try {
+    const res  = await fetch(`/api/alertas?since=${ultimoId}`);
+    const data = await res.json();
 
-  es.onmessage = (e) => {
-    if (!e.data) return;
-    wsDot.className     = 'dot connected';
-    wsLabel.textContent = 'Conectado';
-    const msg = JSON.parse(e.data);
-
-    if (msg.type === 'historial') {
-      msg.data.forEach(a => agregarTarjeta(a, false));
+    if (data.length > 0) {
+      data.slice().reverse().forEach(a => {
+        agregarTarjeta(a, true);
+        mostrarAlertaActiva(a);
+        reproducirSonido();
+      });
+      ultimoId = data[0].id;
       actualizarContador();
-    } else if (msg.type === 'nueva_alerta') {
-      agregarTarjeta(msg.data, true);
-      mostrarAlertaActiva(msg.data);
-      reproducirSonido();
-      actualizarContador();
-    } else if (msg.type === 'limpiar') {
-      limpiarLista();
     }
-  };
+
+    erroresConsecutivos = 0;
+    setConectado(true);
+  } catch (_) {
+    erroresConsecutivos++;
+    if (erroresConsecutivos >= 3) setConectado(false);
+  }
+}
+
+function setConectado(ok) {
+  wsDot.className     = ok ? 'dot connected' : 'dot disconnected';
+  wsLabel.textContent = ok ? 'Conectado'     : 'Sin conexión';
+}
+
+function iniciarPolling() {
+  cargarHistorial();
+  setInterval(pollNuevasAlertas, 2000);
 }
 
 /* ─── Alerta activa (banner) ───────────────────────────── */
@@ -167,4 +182,4 @@ function escHtml(str) {
 }
 
 /* ─── Iniciar ──────────────────────────────────────────── */
-conectarSSE();
+iniciarPolling();

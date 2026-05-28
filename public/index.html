@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel de Pánico - ESP32</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <span class="logo">🚨</span>
+      <div>
+        <h1>Panic Button Monitor</h1>
+        <p class="subtitle">Sistema de alertas ESP32</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="ws-status" id="wsStatus">
+        <span class="dot" id="wsDot"></span>
+        <span id="wsLabel">Conectando...</span>
+      </div>
+      <div class="counter-box">
+        <span class="counter-num" id="totalAlertas">0</span>
+        <span class="counter-label">alertas</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Barra de acciones -->
+    <div class="toolbar">
+      <button class="btn btn-test" id="btnTest">Enviar alerta de prueba</button>
+      <button class="btn btn-clear" id="btnClear">Limpiar historial</button>
+    </div>
+
+    <!-- Alerta activa (última) -->
+    <section class="active-alert hidden" id="activeAlert">
+      <div class="active-alert-inner">
+        <div class="alert-icon">🆘</div>
+        <div class="alert-info">
+          <h2 id="activeMessage">¡ALERTA DE PÁNICO!</h2>
+          <p id="activeDevice"></p>
+          <p id="activeTime"></p>
+        </div>
+        <a class="btn-map" id="activeMapLink" target="_blank" rel="noopener">Ver en mapa</a>
+      </div>
+    </section>
+
+    <!-- Historial -->
+    <section class="history-section">
+      <h3>Historial de alertas</h3>
+      <div class="alert-list" id="alertList">
+        <div class="empty-state" id="emptyState">
+          <p>Sin alertas registradas.</p>
+          <p class="muted">Cuando el ESP32 presione el botón, aparecerán aquí.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <audio id="alertSound" preload="auto">
+    <!-- Sonido generado por JS si no hay archivo -->
+  </audio>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -29,7 +29,6 @@ app.get('/', (req, res) => {
 <h1>Panic Button Monitor</h1>
 <p>Estado: <strong id="e">Conectando...</strong></p>
 <p>Alertas: <strong id="t">0</strong></p>
-<button onclick="prueba()">Enviar prueba</button>
 <button onclick="limpiar()">Limpiar</button>
 <hr><div id="lista"></div>
 <script>

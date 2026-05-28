@@ -6,19 +6,92 @@
 </head>
 <body>
   <h1>Panic Button Monitor</h1>
-
-  <p>Estado: <strong id="estado">Conectando...</strong></p>
-  <p>Alertas recibidas: <strong id="total">0</strong></p>
-
-  <button onclick="enviarPrueba()">Enviar alerta de prueba</button>
-  <button onclick="limpiar()">Limpiar historial</button>
-
-  <p id="debug">Esperando primer poll...</p>
-
+  <p>Estado: <strong id="estado">Iniciando...</strong></p>
+  <p>Alertas: <strong id="total">0</strong></p>
+  <p id="debug">-</p>
+  <button onclick="enviarPrueba()">Prueba</button>
+  <button onclick="limpiar()">Limpiar</button>
   <hr>
-
   <div id="alertas"></div>
 
-  <script src="app.js"></script>
+  <script>
+    var ultimoId = 0;
+    var total = 0;
+
+    function cargarHistorial() {
+      fetch('/api/alertas')
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          for (var i = data.length - 1; i >= 0; i--) {
+            mostrarAlerta(data[i], false);
+          }
+          if (data.length > 0) ultimoId = data[0].id;
+          total = data.length;
+          document.getElementById('total').textContent = total;
+          document.getElementById('estado').textContent = 'Conectado';
+        })
+        .catch(function(e){
+          document.getElementById('estado').textContent = 'Error: ' + e.message;
+        });
+    }
+
+    function poll() {
+      var url = '/api/alertas?since=' + ultimoId + '&_=' + Date.now();
+      fetch(url)
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          document.getElementById('debug').textContent =
+            'Poll: ' + new Date().toLocaleTimeString() +
+            ' | id: ' + ultimoId +
+            ' | nuevas: ' + data.length;
+          if (data.length > 0) {
+            for (var i = data.length - 1; i >= 0; i--) {
+              mostrarAlerta(data[i], true);
+              total++;
+            }
+            ultimoId = data[0].id;
+            document.getElementById('total').textContent = total;
+          }
+          document.getElementById('estado').textContent = 'Conectado';
+        })
+        .catch(function(e){
+          document.getElementById('estado').textContent = 'Error: ' + e.message;
+        });
+    }
+
+    function mostrarAlerta(a, nueva) {
+      var div = document.createElement('div');
+      div.innerHTML =
+        '<hr>' +
+        '<p><b>' + a.message + '</b></p>' +
+        '<p>Dispositivo: ' + a.device_id + '</p>' +
+        '<p>Hora: ' + a.timestamp + '</p>' +
+        '<p>Recibido: ' + a.received_at + '</p>' +
+        (a.lat ? '<p>GPS: ' + a.lat + ', ' + a.lng + '</p>' : '');
+      var contenedor = document.getElementById('alertas');
+      if (nueva) {
+        contenedor.insertBefore(div, contenedor.firstChild);
+      } else {
+        contenedor.appendChild(div);
+      }
+    }
+
+    function enviarPrueba() {
+      fetch('/api/test', { method: 'POST' });
+    }
+
+    function limpiar() {
+      fetch('/api/alertas', { method: 'DELETE' })
+        .then(function(){
+          document.getElementById('alertas').innerHTML = '';
+          document.getElementById('total').textContent = '0';
+          total = 0;
+          ultimoId = 0;
+        });
+    }
+
+    cargarHistorial();
+    setInterval(poll, 2000);
+  </script>
 </body>
 </html>

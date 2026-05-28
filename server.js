@@ -43,6 +43,7 @@ app.post('/api/panic', (req, res) => {
 
 // Historial — acepta ?since=<id> para devolver solo alertas nuevas
 app.get('/api/alertas', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
   const since = parseInt(req.query.since) || 0;
   const resultado = since ? alertas.filter(a => a.id > since) : alertas;
   res.json(resultado);

@@ -33,7 +33,7 @@ async function cargarHistorial() {
 
 async function pollNuevasAlertas() {
   try {
-    const res  = await fetch(`/api/alertas?since=${ultimoId}`);
+    const res  = await fetch(`/api/alertas?since=${ultimoId}&_=${Date.now()}`);
     const data = await res.json();
 
     if (data.length > 0) {
